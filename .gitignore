@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.so
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Large data (optional: remove lines to include)
+ball_dataset/
+train/
+labelled/
+labelled 2/
+detection_output/
+
+# YOLO runs - keep results.csv and args.yaml, ignore weights
+runs/ball_train/weights/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
