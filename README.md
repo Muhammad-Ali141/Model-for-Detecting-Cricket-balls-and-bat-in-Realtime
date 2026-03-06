@@ -1,17 +1,17 @@
-# Model for Detecting Cricket Balls in Realtime
+# Model for Detecting Cricket Balls and Bats in Realtime
 
-A YOLOv8-based object detection model for real-time cricket ball detection in videos. Trained on a custom dataset of cricket ball images, the model detects the ball in video frames and draws bounding boxes for visualization.
+YOLOv8-based object detection for real-time cricket **ball** and **bat** detection in videos. Custom-trained on separate datasets; the notebook runs both models and draws ball (circle/box) and bat (rectangle) on each frame.
 
 ---
 
 ## Features
 
-- **Custom-trained YOLOv8n** model (`ball_best.pt`) for cricket ball detection
-- **COCO → YOLO** dataset conversion and train/val split
-- **Training pipeline** (`train_ball_model.py`) with reproducible settings
-- **Inference notebook** (`Ball_Detection.ipynb`) for processing videos from `labelled/` and `labelled 2/`
-- **Temporal consistency**: Uses previous frame ball position to disambiguate multiple detections
-- **Output**: Annotated videos saved to `detection_output/`
+- **Ball model** (`ball_best.pt`) — cricket ball detection with temporal consistency
+- **Bat model** (`bat_best.pt`) — cricket bat detection
+- **COCO → YOLO** dataset conversion and train/val splits
+- **Training scripts**: `train_ball_model.py` (train_ball/), `train_bat_model.py` (train_bat/, merges train/ then deletes it)
+- **Inference notebook** (`Ball_Detection.ipynb`) — processes videos from `labelled/` and `labelled 2/`
+- **Output**: Annotated videos in `detection_output/`
 
 ---
 
@@ -26,81 +26,63 @@ pip install opencv-python numpy ultralytics matplotlib
 
 ---
 
-## Dataset
+## Datasets
 
-- **Source**: COCO-annotated cricket ball images in `train/` with `_annotations.coco.json`
-- **Format**: Single class — `ball` (stump annotations ignored)
-- **Split**: 80% train, 20% validation (random seed 42)
-- **Images**: ~6,996 annotated images (Cricket Dataset, Roboflow)
+- **Ball**: COCO-annotated images in `train_ball/` — single class `ball`. ~7k images, 80/20 split.
+- **Bat**: COCO-annotated images in `train_bat/`; `train_bat_model.py` can merge in `train/` then delete it. ~2.8k images after merge, 80/20 split.
 
 ---
 
 ## Training
 
-1. Place your COCO dataset in `train/`:
-   - `train/_annotations.coco.json`
-   - `train/*.jpg`
+**Ball** — dataset in `train_ball/`:
+```bash
+python train_ball_model.py
+```
+→ `ball_dataset/`, `runs/ball_train/`, `ball_best.pt`
 
-2. Run training:
-   ```bash
-   python train_ball_model.py
-   ```
+**Bat** — dataset in `train_bat/` (optionally merge `train/` into it, then script deletes `train/`):
+```bash
+python train_bat_model.py
+```
+→ `bat_dataset/`, `runs/bat_train/`, `bat_best.pt`
 
-3. Outputs:
-   - `ball_dataset/` — YOLO-format dataset
-   - `runs/ball_train/` — training logs, metrics, and checkpoints
-   - `ball_best.pt` — best model saved to project root
-
-### Training Configuration
-
-| Parameter   | Value |
-|------------|-------|
-| Model      | YOLOv8n (nano) |
-| Epochs     | 50 |
-| Image size | 640 |
-| Batch size | 16 |
-| Val split  | 0.2 |
-| Seed       | 42 |
+Both use YOLOv8n, image size 640, batch 16, seed 42. Ball: 80/20 split; bat: 80/20 after merge.
 
 ---
 
 ## Model Performance
 
-Results from `runs/ball_train/results.csv` (final epoch 50):
+### Ball (runs/ball_train)
 
-| Metric | Value |
-|--------|-------|
-| **Precision** | 89.01% |
-| **Recall** | 81.64% |
-| **mAP@50** | 87.04% |
-| **mAP@50-95** | 51.40% |
-| **Training time** | ~20 min (50 epochs) |
+| Metric       | Value   |
+|-------------|---------|
+| Precision   | 89.01%  |
+| Recall      | 81.64%  |
+| mAP@50      | 87.04%  |
+| mAP@50-95   | 51.40%  |
 
-### Training Curve (selected epochs)
+### Bat (runs/bat_train)
 
-| Epoch | Precision | Recall | mAP50 | mAP50-95 |
-|-------|-----------|--------|-------|----------|
-| 1     | 54.83%    | 51.36% | 46.10%| 17.64%   |
-| 10    | 82.41%    | 62.63% | 71.44%| 37.53%   |
-| 25    | 83.61%    | 73.73% | 81.13%| 45.86%   |
-| 40    | 88.59%    | 79.64% | 85.55%| 48.33%   |
-| 50    | 89.01%    | 81.64% | 87.04%| 51.40%   |
+| Metric       | Value   |
+|-------------|---------|
+| Precision   | 88.8%   |
+| Recall      | 82.5%   |
+| mAP@50      | 85.7%   |
+| mAP@50-95   | 58.6%   |
+| Val images  | 86      |
+| Epochs      | 250     |
 
 ---
 
 ## Inference (Detection on Videos)
 
 1. Open `Ball_Detection.ipynb` in Jupyter.
-2. Ensure `ball_best.pt` exists (from training).
-3. Place videos in `labelled/` and `labelled 2/` (or adjust paths).
-4. Run all cells. Output videos are saved to `detection_output/`.
+2. Ensure `ball_best.pt` (and optionally `bat_best.pt`) exist.
+3. Place videos in `labelled/` and `labelled 2/`.
+4. Run all cells. Outputs go to `detection_output/`.
 
-The notebook:
-- Collects videos recursively from the input folders
-- Samples N videos per subfolder for testing
-- Runs detection with confidence threshold 0.5
-- Draws circles and boxes around detected balls
-- Previews results with matplotlib
+The notebook runs both models, draws **ball** (circle + box) and **bat** (orange box), and previews with matplotlib.
 
 ---
 
@@ -109,31 +91,24 @@ The notebook:
 ```
 .
 ├── README.md
-├── train_ball_model.py      # Training script
-├── Ball_Detection.ipynb     # Detection notebook
-├── ball_best.pt             # Trained model (best checkpoint)
-├── ball_dataset/            # YOLO dataset (generated)
-│   ├── data.yaml
-│   ├── images/train, images/val
-│   └── labels/train, labels/val
-├── runs/ball_train/         # Training outputs
-│   ├── results.csv          # Metrics per epoch
-│   ├── args.yaml            # Training arguments
-│   └── weights/best.pt      # Best weights (also copied to ball_best.pt)
-├── train/                   # Source COCO dataset
-│   ├── _annotations.coco.json
-│   └── *.jpg
-├── labelled/                # Input videos
-├── labelled 2/              # Additional input videos
-└── detection_output/        # Output annotated videos
+├── train_ball_model.py      # Ball training (train_ball/)
+├── train_bat_model.py       # Bat training (train_bat/, merges train/ then deletes)
+├── Ball_Detection.ipynb     # Ball + bat detection
+├── ball_best.pt, bat_best.pt
+├── ball_dataset/, bat_dataset/
+├── runs/ball_train/, runs/bat_train/
+├── train_ball/, train_bat/  # COCO source data
+├── labelled/, labelled 2/
+└── detection_output/
 ```
 
 ---
 
 ## Usage Summary
 
-1. **Train**: `python train_ball_model.py` → produces `ball_best.pt`
-2. **Detect**: Run `Ball_Detection.ipynb` → produces `*_detected.mp4` in `detection_output/`
+1. **Train ball**: `python train_ball_model.py` → `ball_best.pt`
+2. **Train bat**: `python train_bat_model.py` → `bat_best.pt` (merges train/ into train_bat/, deletes train/)
+3. **Detect**: Run `Ball_Detection.ipynb` → `*_detected.mp4` in `detection_output/`
 
 ---
 

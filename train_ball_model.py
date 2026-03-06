@@ -1,6 +1,6 @@
 """
 Train cricket ball detection model from COCO-annotated dataset.
-Converts train/_annotations.coco.json + images to YOLO format, splits train/val,
+Converts train_ball/_annotations.coco.json + images to YOLO format, splits train/val,
 trains YOLOv8, and saves best.pt.
 """
 import json
@@ -9,14 +9,14 @@ from pathlib import Path
 from collections import defaultdict
 
 BASE_DIR = Path(__file__).resolve().parent
-TRAIN_DIR = BASE_DIR / "train"
+TRAIN_DIR = BASE_DIR / "train_ball"
 COCO_JSON = TRAIN_DIR / "_annotations.coco.json"
 DATASET_DIR = BASE_DIR / "ball_dataset"
 OUTPUT_DIR = BASE_DIR / "runs" / "ball_train"
 BEST_MODEL_PATH = BASE_DIR / "ball_best.pt"
 
 # Training config
-EPOCHS = 50
+EPOCHS = 100
 IMGSZ = 640
 BATCH = 16
 VAL_SPLIT = 0.2

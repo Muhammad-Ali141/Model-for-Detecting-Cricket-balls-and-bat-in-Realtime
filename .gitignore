@@ -11,15 +11,23 @@ env/
 # Jupyter
 .ipynb_checkpoints/
 
-# Large data (optional: remove lines to include)
+# Large data
 ball_dataset/
+bat_dataset/
 train/
+train_ball/
+train_bat/
 labelled/
 labelled 2/
 detection_output/
 
-# YOLO runs - keep results.csv and args.yaml, ignore weights
+# YOLO runs - keep results and plots, ignore weights
 runs/ball_train/weights/
+runs/bat_train/weights/
+
+# Base pretrained models (auto-downloaded by Ultralytics)
+yolov8n.pt
+yolo11n.pt
 
 # IDE
 .idea/
